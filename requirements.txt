@@ -1,0 +1,32 @@
+# Flask and Core Dependencies (Update versions as needed)
+Flask==3.1.0
+Werkzeug==3.1.3
+Jinja2==3.1.6
+itsdangerous==2.2.0
+click==8.1.8
+MarkupSafe==3.0.2
+blinker==1.9.0
+
+# Image Processing & ML Dependencies (Add these)
+torch
+ultralytics
+transformers
+sentence-transformers
+huggingface_hub
+pandas
+openpyxl
+Pillow
+gdown
+pyxdameraulevenshtein
+numpy
+
+# Optional - Keep if your app still uses MongoDB
+Flask-PyMongo==3.0.1
+pymongo==4.12.0
+dnspython==2.7.0
+
+# Optional - Keep if your app still uses .env files
+python-dotenv==1.1.0
+
+# Optional - Usually a dependency, might not need explicit listing
+# colorama==0.4.6
