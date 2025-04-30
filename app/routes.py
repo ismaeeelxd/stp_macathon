@@ -42,27 +42,44 @@ def predict_prescription():
         temp_filepath = os.path.join(upload_folder, filename)
 
         try:
-            file.save(temp_filepath) # Save the uploaded file temporarily
+            # Save file temporarily
+            file.save(temp_filepath)
             print(f"File saved to: {temp_filepath}")
 
-            # Call the processing function
-            results = process_image(temp_filepath) # Pass the path
+            # Process the image
+            results = process_image(temp_filepath)
 
             # Handle potential errors from processing
             if results is None:
                 abort(500, description="Error processing the image.")
 
-            print(f"Processing results: {results}")
-            return jsonify({"results": results})
+            # Save image to MongoDB
+            file.seek(0)  # Reset file pointer to beginning
+            image_id = services.save_uploaded_image(file)
+            
+            if not image_id:
+                abort(500, description="Failed to save image to database.")
+
+            # Save results to MongoDB
+            result_id = services.repositories.save_prescription_results(image_id, results)
+            
+            if not result_id:
+                abort(500, description="Failed to save results to database.")
+
+            return jsonify({
+                "image_id": str(image_id),
+                "result_id": str(result_id),
+                "results": results
+            })
 
         except Exception as e:
             # Log the exception for debugging
             # current_app.logger.error(f"An error occurred: {e}") # Use app logger if configured
-            print(f"error occured : {e}")
+            print(f"error occurred: {e}")
             traceback.print_exc()
             abort(500, description=f"An internal server error occurred: {e}")
         finally:
-            # Clean up the temporary file
+            # Clean up temporary file
             if os.path.exists(temp_filepath):
                 try:
                     os.remove(temp_filepath)

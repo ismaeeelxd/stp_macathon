@@ -2,6 +2,7 @@
 from app import mongo # Import the initialized PyMongo object
 from gridfs import GridFS, NoFile # Import GridFS components
 from bson.objectid import ObjectId
+from datetime import datetime
 
 def save_image(file_storage, filename, content_type):
 
@@ -32,4 +33,21 @@ def get_image_data(file_id_str):
         return None
     except Exception as e:
         print(f"Error retrieving from GridFS (ID: {file_id_str}): {e}")
+        return None
+
+def save_prescription_results(image_id, results):
+    """
+    Save prescription processing results to MongoDB
+    """
+    try:
+        prescription_doc = {
+            'image_id': image_id,
+            'results': results,
+            'created_at': datetime.utcnow()
+        }
+        result = mongo.db.prescriptions.insert_one(prescription_doc)
+        print(f"Saved prescription results with ID: {result.inserted_id}")
+        return result.inserted_id
+    except Exception as e:
+        print(f"Error saving prescription results: {e}")
         return None
