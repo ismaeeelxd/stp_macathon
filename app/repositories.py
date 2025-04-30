@@ -51,3 +51,31 @@ def save_prescription_results(image_id, results):
     except Exception as e:
         print(f"Error saving prescription results: {e}")
         return None
+
+def login(email, password):
+    """
+    Authenticate user credentials
+    """
+    try:
+        user = mongo.db.users.find_one({'email': email, 'password': password})
+        return user is not None
+    except Exception as e:
+        print(f"Error authenticating user: {e}")
+        return False
+
+def create_user(email, password):
+    """
+    Create a new user in the database
+    """
+    try:
+        user = {
+            'email': email,
+            'password': password,
+            'created_at': datetime.utcnow()
+        }
+        result = mongo.db.users.insert_one(user)
+        return result.inserted_id is not None   
+    except Exception as e:
+        print(f"Error creating user: {e}")
+        return False
+        

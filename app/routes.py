@@ -14,6 +14,21 @@ bp = Blueprint('main', __name__)
 import traceback
 from flask import request, jsonify, abort, current_app
 
+@bp.route('/signup', methods=['POST'])
+def sign_up():
+    data = request.json
+    username = data.get('email')
+    password = data.get('password')
+
+    
+    if not username or not password:
+        return jsonify({'error': 'Username and password are required.'}), 400
+    
+    if services.repositories.create_user(username, password):
+        return jsonify({'message': 'User created successfully.'}), 201
+    else:
+        return jsonify({'error': 'Failed to create user.'}), 400
+
 @bp.route('/predict', methods=["POST"])
 def predict_prescription():
     # Check if the post request has the file part
@@ -95,18 +110,13 @@ def predict_prescription():
 @bp.route('/login', methods=['POST'])
 def login():
     data = request.json
-    username = data.get('username')
+    email = data.get('email')
     password = data.get('password')
 
-    if not username or not password:
-        return jsonify({'error': 'Username and password are required.'}), 400
-    
-    if username == 'admin' and password == 'admin':
-        return jsonify({'message': 'Login successful.'}), 200
-    else:
-        return jsonify({'error': 'Invalid username or password.'}), 401
-    
-    return services.login(username, password)
+    if not email or not password:
+        return jsonify({'error': 'email and password are required.'}), 400
+        
+    return services.login(email, password)
 
 
 @bp.route('/upload', methods=['POST'])

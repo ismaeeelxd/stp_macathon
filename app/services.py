@@ -33,3 +33,10 @@ def save_uploaded_image(file_storage):
         return None
     
 
+def login(email, password):
+    return repositories.login(email, password)
+
+def create_user(email, password):
+    return repositories.create_user(email, password)
+
+
