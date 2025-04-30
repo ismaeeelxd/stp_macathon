@@ -78,4 +78,24 @@ def create_user(email, password):
     except Exception as e:
         print(f"Error creating user: {e}")
         return False
+
+def update_prescription_results(image_id, results):
+    """
+    Update prescription results for a given image ID
+    """
+    try:
+        prescription = mongo.db.prescriptions.find_one({'image_id': image_id})
+        if prescription:
+            prescription['results'] = results
+            prescription['updated_at'] = datetime.utcnow()
+            result = mongo.db.prescriptions.update_one(
+                {'image_id': image_id},
+                {'$set': prescription}
+            )
+            return result.modified_count > 0
+        else:
+            return False
+    except Exception as e:
+        print(f"Error updating prescription results: {e}")
+        return False
         
