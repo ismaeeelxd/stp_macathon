@@ -92,7 +92,21 @@ def predict_prescription():
         abort(400, description="File type not allowed.")
 
 
+@bp.route('/login', methods=['POST'])
+def login():
+    data = request.json
+    username = data.get('username')
+    password = data.get('password')
 
+    if not username or not password:
+        return jsonify({'error': 'Username and password are required.'}), 400
+    
+    if username == 'admin' and password == 'admin':
+        return jsonify({'message': 'Login successful.'}), 200
+    else:
+        return jsonify({'error': 'Invalid username or password.'}), 401
+    
+    return services.login(username, password)
 
 
 @bp.route('/upload', methods=['POST'])

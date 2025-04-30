@@ -9,12 +9,6 @@ class Config:
     """Base configuration settings."""
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'SECRET_KEY'
     MONGO_URI = os.environ.get('MONGO_URI') 
-    if MONGO_URI and 'mongodb+srv://' in MONGO_URI:
-        if '?' not in MONGO_URI:
-            MONGO_URI += '?'
-        else:
-            MONGO_URI += '&'
-        MONGO_URI += 'ssl=true&ssl_cert_reqs=CERT_NONE'
     DEBUG = True
     UPLOAD_FOLDER = os.path.join(basedir, 'uploads') 
 
