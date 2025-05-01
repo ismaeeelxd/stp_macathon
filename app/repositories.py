@@ -36,7 +36,7 @@ def get_image_data(file_id_str):
         print(f"Error retrieving from GridFS (ID: {file_id_str}): {e}")
         return None
 
-def save_prescription_results(image_id, results):
+def save_prescription_results(image_id, results,email):
     """
     Save prescription processing results to MongoDB
     """
@@ -44,7 +44,8 @@ def save_prescription_results(image_id, results):
         prescription_doc = {
             'image_id': image_id,
             'results': results,
-            'created_at': datetime.utcnow()
+            'created_at': datetime.utcnow(),
+            "email": email
         }
         result = mongo.db.prescriptions.insert_one(prescription_doc)
         print(f"Saved prescription results with ID: {result.inserted_id}")
@@ -81,7 +82,7 @@ def create_user(email, password):
         print(f"Error creating user: {e}")
         return False
 
-def update_prescription_results(image_id, results):
+def update_prescription_results(image_id, results, email):
     """
     Update prescription results for a given image ID
     """
@@ -99,7 +100,7 @@ def update_prescription_results(image_id, results):
             prescription['updated_at'] = datetime.utcnow()
             result = mongo.db.prescriptions.update_one(
                 {'image_id': image_id},
-                {'$set': prescription}
+                {'$set': prescription},
             )
             print(f"Prescription updated: {result.modified_count}")
             return result.modified_count > 0

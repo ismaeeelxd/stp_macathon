@@ -38,7 +38,7 @@ def edit():
         image_id = data.get('image_id')
         results = data.get('results')
 
-        if not image_id or not results:
+        if not image_id or not results or not email:
             return jsonify({'error': 'Image ID and results are required.'}), 400
         
         update_result = services.repositories.update_prescription_results(image_id, results)
@@ -61,6 +61,7 @@ def predict_prescription():
         abort(400, description="No file part in the request.")
 
     file = request.files['file']
+    email = request.form.get('email')
 
     # If the user does not select a file, the browser submits an
     # empty file without a filename.
@@ -101,7 +102,7 @@ def predict_prescription():
                 abort(500, description="Failed to save image to database.")
 
             # Save results to MongoDB
-            result_id = services.repositories.save_prescription_results(image_id, results)
+            result_id = services.repositories.save_prescription_results(image_id, results,email)
             
             if not result_id:
                 abort(500, description="Failed to save results to database.")
