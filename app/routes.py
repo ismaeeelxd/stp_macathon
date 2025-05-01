@@ -33,15 +33,26 @@ def sign_up():
 
 @bp.route('/edit', methods=['POST'])
 def edit():
-    data = request.json
-    image_id = data.get('image_id')
-    results = data.get('results')
+    try:
+        data = request.json
+        image_id = data.get('image_id')
+        results = data.get('results')
 
-    if not image_id or not results:
-        return jsonify({'error': 'Image ID and results are required.'}), 400
-    
-    if services.repositories.update_prescription_results(image_id, results):
-        return jsonify({'message': 'Prescription results updated successfully.'}), 200
+        if not image_id or not results:
+            return jsonify({'error': 'Image ID and results are required.'}), 400
+        
+        update_result = services.repositories.update_prescription_results(image_id, results)
+        
+        if update_result is None:
+            return jsonify({'error': 'Failed to update prescription results.'}), 500
+        elif update_result is False:
+            return jsonify({'error': 'Prescription not found.'}), 404
+        else:
+            return jsonify({'message': 'Prescription results updated successfully.'}), 200
+            
+    except Exception as e:
+        print(f"Error in edit route: {e}")
+        return jsonify({'error': 'An unexpected error occurred while updating the prescription.'}), 500
 
 @bp.route('/predict', methods=["POST"])
 def predict_prescription():

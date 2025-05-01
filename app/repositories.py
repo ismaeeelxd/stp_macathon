@@ -3,6 +3,7 @@ from app import mongo # Import the initialized PyMongo object
 from gridfs import GridFS, NoFile # Import GridFS components
 from bson.objectid import ObjectId
 from datetime import datetime
+from bson import ObjectId
 
 def save_image(file_storage, filename, content_type):
 
@@ -85,6 +86,13 @@ def update_prescription_results(image_id, results):
     Update prescription results for a given image ID
     """
     try:
+        # Convert string image_id to ObjectId
+        try:
+            image_id = ObjectId(image_id)
+        except:
+            print(f"Invalid image_id format: {image_id}")
+            return None
+
         prescription = mongo.db.prescriptions.find_one({'image_id': image_id})
         if prescription:
             prescription['results'] = results
@@ -93,10 +101,12 @@ def update_prescription_results(image_id, results):
                 {'image_id': image_id},
                 {'$set': prescription}
             )
+            print(f"Prescription updated: {result.modified_count}")
             return result.modified_count > 0
         else:
+            print(f"Prescription not found for image ID: {image_id}")
             return False
     except Exception as e:
         print(f"Error updating prescription results: {e}")
-        return False
+        return None
         
