@@ -61,7 +61,7 @@ def predict_prescription():
         abort(400, description="No file part in the request.")
 
     file = request.files['file']
-    email = "iamismail2004@gmail.com"
+    email = "mazin@gmail.com"
 
     # If the user does not select a file, the browser submits an
     # empty file without a filename.
