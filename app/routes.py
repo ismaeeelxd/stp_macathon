@@ -30,6 +30,19 @@ def sign_up():
     else:
         return jsonify({'error': 'Failed to create user.'}), 400
 
+
+@bp.route('/edit', methods=['POST'])
+def edit():
+    data = request.json
+    image_id = data.get('image_id')
+    results = data.get('results')
+
+    if not image_id or not results:
+        return jsonify({'error': 'Image ID and results are required.'}), 400
+    
+    if services.repositories.update_prescription_results(image_id, results):
+        return jsonify({'message': 'Prescription results updated successfully.'}), 200
+
 @bp.route('/predict', methods=["POST"])
 def predict_prescription():
     # Check if the post request has the file part

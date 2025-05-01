@@ -36,6 +36,9 @@ def save_uploaded_image(file_storage):
 def login(email, password):
     return repositories.login(email, password)
 
+def update_prescription_results(image_id, results):
+    return repositories.update_prescription_results(image_id, results)
+
 def create_user(email, password):
     return repositories.create_user(email, password)
 

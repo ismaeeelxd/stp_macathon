@@ -51,6 +51,7 @@ def save_prescription_results(image_id, results):
     except Exception as e:
         print(f"Error saving prescription results: {e}")
         return None
+        
 
 def login(email, password):
     """
