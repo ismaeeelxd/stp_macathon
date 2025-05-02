@@ -20,7 +20,7 @@ version: 1.0.0+1
 
 environment:
 #sdk was 3.7.2
-  sdk: ^3.7.2
+  sdk: ^3.7.0
 
 # Dependencies specify other packages that your package needs in order to work.
 # To automatically upgrade your package dependencies to the latest versions
@@ -32,6 +32,7 @@ dependencies:
   flutter:
     sdk: flutter
   image_picker: ^1.0.2  # For selecting images
+  image_cropper: ^5.0.1  # For cropping images
   flutter_dotenv: ^5.1.0         
   path: ^1.8.2          # For file path operations
   async: ^2.9.0         # For handling streams

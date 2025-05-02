@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
+import 'package:image_cropper/image_cropper.dart';
 import 'package:my_prescription_app/services/service_provider.dart';
 import 'package:my_prescription_app/models/medicine_appointment.dart';
 import 'package:my_prescription_app/screens/results_screen.dart';
@@ -30,11 +31,7 @@ class _UploadScreenState extends State<UploadScreen> {
     final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
 
     if (image != null) {
-      // For web and Linux, just use the image directly
-      setState(() {
-        _image = File(image.path);
-        _uploadStatus = '';
-      });
+      await _cropImage(File(image.path));
     }
   }
 
@@ -42,8 +39,29 @@ class _UploadScreenState extends State<UploadScreen> {
     final XFile? image = await _picker.pickImage(source: ImageSource.camera);
 
     if (image != null) {
+      await _cropImage(File(image.path));
+    }
+  }
+
+  Future<void> _cropImage(File imageFile) async {
+    final croppedFile = await ImageCropper().cropImage(
+      sourcePath: imageFile.path,
+      aspectRatio: const CropAspectRatio(ratioX: 1, ratioY: 1),
+      uiSettings: [
+        AndroidUiSettings(
+          toolbarTitle: 'Crop Image',
+          toolbarColor: Colors.blue,
+          toolbarWidgetColor: Colors.white,
+          initAspectRatio: CropAspectRatioPreset.original,
+          lockAspectRatio: false,
+        ),
+        IOSUiSettings(title: 'Crop Image', aspectRatioLockEnabled: false),
+      ],
+    );
+
+    if (croppedFile != null) {
       setState(() {
-        _image = File(image.path);
+        _image = File(croppedFile.path);
         _uploadStatus = '';
       });
     }
