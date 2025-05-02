@@ -37,11 +37,11 @@ def edit():
         data = request.json
         image_id = data.get('image_id')
         results = data.get('results')
-
-        if not image_id or not results or not email:
+        email = "mazin@gmail.com"
+        if not image_id or not results:
             return jsonify({'error': 'Image ID and results are required.'}), 400
         
-        update_result = services.repositories.update_prescription_results(image_id, results)
+        update_result = services.repositories.update_prescription_results(image_id, results,email)
         
         if update_result is None:
             return jsonify({'error': 'Failed to update prescription results.'}), 500
@@ -61,6 +61,7 @@ def predict_prescription():
         abort(400, description="No file part in the request.")
 
     file = request.files['file']
+    name = request.form.get('name')
     email = "mazin@gmail.com"
 
     # If the user does not select a file, the browser submits an
@@ -102,7 +103,7 @@ def predict_prescription():
                 abort(500, description="Failed to save image to database.")
 
             # Save results to MongoDB
-            result_id = services.repositories.save_prescription_results(image_id, results,email)
+            result_id = services.repositories.save_prescription_results(image_id, results,email,name)
             
             if not result_id:
                 abort(500, description="Failed to save results to database.")
@@ -131,6 +132,13 @@ def predict_prescription():
     else:
         # Added else block based on previous examples for disallowed files
         abort(400, description="File type not allowed.")
+
+
+@bp.route('/history', methods=['GET'])
+def history():
+    email = "mazin@gmail.com"
+    history = services.repositories.get_history(email)
+    return jsonify(history)
 
 
 @bp.route('/login', methods=['POST'])

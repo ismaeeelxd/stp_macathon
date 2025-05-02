@@ -36,7 +36,7 @@ def get_image_data(file_id_str):
         print(f"Error retrieving from GridFS (ID: {file_id_str}): {e}")
         return None
 
-def save_prescription_results(image_id, results,email):
+def save_prescription_results(image_id, results,email,name):
     """
     Save prescription processing results to MongoDB
     """
@@ -45,7 +45,8 @@ def save_prescription_results(image_id, results,email):
             'image_id': image_id,
             'results': results,
             'created_at': datetime.utcnow(),
-            "email": email
+            "email": email,
+            "name": name
         }
         result = mongo.db.prescriptions.insert_one(prescription_doc)
         print(f"Saved prescription results with ID: {result.inserted_id}")
@@ -54,6 +55,36 @@ def save_prescription_results(image_id, results,email):
         print(f"Error saving prescription results: {e}")
         return None
         
+
+def get_history(email):
+    """
+    Get prescription history for a given email
+    Returns a list of prescriptions with their results and dates
+    """
+    try:
+        # Find all prescriptions for the email, including results and created_at fields
+        history = mongo.db.prescriptions.find(
+            {'email': email}, 
+            {
+                'results': 1, 
+                'created_at': 1,
+                'name': 1,
+                '_id': 0
+            }
+        )
+        # Format each prescription as an object with results and date
+        formatted_history = [
+            {
+                'results': doc['results'],
+                'date': doc['created_at'].isoformat() if 'created_at' in doc else None,
+                'name': doc['name'] if 'name' in doc else None
+            }
+            for doc in history if 'results' in doc
+        ]
+        return formatted_history
+    except Exception as e:
+        print(f"Error getting prescription history: {e}")
+        return None
 
 def login(email, password):
     """
