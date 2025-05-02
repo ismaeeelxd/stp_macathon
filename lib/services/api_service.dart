@@ -5,7 +5,7 @@ import 'package:path/path.dart';
 import 'package:my_prescription_app/models/medicine_appointment.dart';
 
 class ApiService {
-  final String _baseUrl = 'http://10.0.2.2:5000/';
+  final String _baseUrl = 'http://127.0.0.1:5000/';
   String? _lastImageId;
 
   Future<List<MedicineAppointment>> uploadImage(

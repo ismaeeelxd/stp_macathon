@@ -19,6 +19,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 version: 1.0.0+1
 
 environment:
+#sdk was 3.7.2
   sdk: ^3.7.2
 
 # Dependencies specify other packages that your package needs in order to work.
@@ -39,6 +40,7 @@ dependencies:
   http: ^1.1.0  # For API requests
   permission_handler: ^12.0.0+1 
   url_launcher: ^6.1.5
+  provider: ^6.1.1  # For state management
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.

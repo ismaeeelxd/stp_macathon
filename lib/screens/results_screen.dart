@@ -3,6 +3,8 @@ import 'package:my_prescription_app/models/medicine_appointment.dart';
 import 'package:my_prescription_app/screens/edit_item.dart';
 import 'package:my_prescription_app/screens/checkout_screen.dart';
 import 'package:my_prescription_app/services/service_provider.dart';
+import 'package:my_prescription_app/services/cart_service.dart';
+import 'package:provider/provider.dart';
 
 class ResultsScreen extends StatefulWidget {
   final List<MedicineAppointment> medicineAppointments;
@@ -15,12 +17,13 @@ class ResultsScreen extends StatefulWidget {
 class _ResultsScreenState extends State<ResultsScreen> {
   late List<MedicineAppointment> _medicineAppointments;
   final _llmService = ServiceProvider.getLlmService();
-  final List<MedicineAppointment> _cartItems = [];
+  late CartService _cartService;
 
   @override
   void initState() {
     super.initState();
     _medicineAppointments = List.from(widget.medicineAppointments);
+    _cartService = ServiceProvider.getCartService();
   }
 
   void _editItem(int index) async {
@@ -37,45 +40,35 @@ class _ResultsScreenState extends State<ResultsScreen> {
         _medicineAppointments[index] = updatedItem;
 
         // Update item in cart if it exists there
-        final cartIndex = _cartItems.indexWhere(
-          (item) =>
-              item.medicine == _medicineAppointments[index].medicine &&
-              item.appointment == _medicineAppointments[index].appointment,
-        );
-
-        if (cartIndex != -1) {
-          _cartItems[cartIndex] = updatedItem;
+        if (_cartService.contains(_medicineAppointments[index])) {
+          _cartService.updateItem(_medicineAppointments[index], updatedItem);
         }
       });
     }
   }
 
   void _addToCart(MedicineAppointment item) {
-    setState(() {
-      if (!_cartItems.contains(item)) {
-        _cartItems.add(item);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('${item.medicine} added to cart')),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('${item.medicine} is already in cart')),
-        );
-      }
-    });
+    if (!_cartService.contains(item)) {
+      _cartService.addItem(item);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('${item.medicine} added to cart')));
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${item.medicine} is already in cart')),
+      );
+    }
   }
 
   void _removeFromCart(MedicineAppointment item) {
-    setState(() {
-      _cartItems.remove(item);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${item.medicine} removed from cart')),
-      );
-    });
+    _cartService.removeItem(item);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('${item.medicine} removed from cart')),
+    );
   }
 
   void _goToCheckout() {
-    if (_cartItems.isEmpty) {
+    if (_cartService.items.isEmpty) {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('Cart is empty')));
@@ -85,7 +78,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => CheckoutScreen(cartItems: _cartItems),
+        builder: (context) => CheckoutScreen(cartItems: _cartService.items),
       ),
     );
   }
@@ -187,139 +180,163 @@ class _ResultsScreenState extends State<ResultsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Prescription Results'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.save),
-            onPressed: () async {
-              try {
-                final apiService = ServiceProvider.getApiService();
-                await apiService.editPrescription(_medicineAppointments);
-                if (!mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Results saved successfully')),
-                );
-              } catch (e) {
-                if (!mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Error saving results: ${e.toString()}'),
-                  ),
-                );
-              }
-            },
-          ),
-          Stack(
-            alignment: Alignment.center,
-            children: [
-              IconButton(
-                icon: const Icon(Icons.shopping_cart),
-                onPressed: _goToCheckout,
-              ),
-              if (_cartItems.isNotEmpty)
-                Positioned(
-                  right: 8,
-                  top: 8,
-                  child: Container(
-                    padding: const EdgeInsets.all(2),
-                    decoration: BoxDecoration(
-                      color: Colors.red,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    constraints: const BoxConstraints(
-                      minWidth: 16,
-                      minHeight: 16,
-                    ),
-                    child: Text(
-                      _cartItems.length.toString(),
-                      style: const TextStyle(color: Colors.white, fontSize: 10),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
+    return ChangeNotifierProvider.value(
+      value: _cartService,
+      child: Consumer<CartService>(
+        builder: (context, cartService, child) {
+          return Scaffold(
+            appBar: AppBar(
+              title: const Text('Prescription Results'),
+              actions: [
+                IconButton(
+                  icon: const Icon(Icons.save),
+                  onPressed: () async {
+                    try {
+                      final apiService = ServiceProvider.getApiService();
+                      await apiService.editPrescription(_medicineAppointments);
+                      if (!mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Results saved successfully'),
+                        ),
+                      );
+                    } catch (e) {
+                      if (!mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            'Error saving results: ${e.toString()}',
+                          ),
+                        ),
+                      );
+                    }
+                  },
                 ),
-            ],
-          ),
-        ],
-      ),
-      body:
-          _medicineAppointments.isEmpty
-              ? const Center(child: Text('No data found'))
-              : ListView.builder(
-                itemCount: _medicineAppointments.length,
-                itemBuilder: (context, index) {
-                  final item = _medicineAppointments[index];
-                  final bool isInCart = _cartItems.contains(item);
+                Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.shopping_cart),
+                      onPressed: _goToCheckout,
+                    ),
+                    if (cartService.items.isNotEmpty)
+                      Positioned(
+                        right: 8,
+                        top: 8,
+                        child: Container(
+                          padding: const EdgeInsets.all(2),
+                          decoration: BoxDecoration(
+                            color: Colors.red,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          constraints: const BoxConstraints(
+                            minWidth: 16,
+                            minHeight: 16,
+                          ),
+                          child: Text(
+                            cartService.items.length.toString(),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ],
+            ),
+            body:
+                _medicineAppointments.isEmpty
+                    ? const Center(child: Text('No data found'))
+                    : ListView.builder(
+                      itemCount: _medicineAppointments.length,
+                      itemBuilder: (context, index) {
+                        final item = _medicineAppointments[index];
+                        final bool isInCart = cartService.contains(item);
 
-                  return Card(
-                    margin: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 8,
-                    ),
-                    child: Column(
-                      children: [
-                        ListTile(
-                          title: Text(
-                            item.medicine,
-                            style: const TextStyle(fontWeight: FontWeight.bold),
+                        return Card(
+                          margin: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
                           ),
-                          subtitle: Text(item.appointment),
-                          trailing: Row(
-                            mainAxisSize: MainAxisSize.min,
+                          child: Column(
                             children: [
-                              IconButton(
-                                icon: const Icon(Icons.edit),
-                                onPressed: () => _editItem(index),
+                              ListTile(
+                                title: Text(
+                                  item.medicine,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                subtitle: Text(item.appointment),
+                                trailing: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    IconButton(
+                                      icon: const Icon(Icons.edit),
+                                      onPressed: () => _editItem(index),
+                                    ),
+                                  ],
+                                ),
                               ),
-                            ],
-                          ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              TextButton.icon(
-                                icon: const Icon(Icons.info_outline),
-                                label: const Text('More Information'),
-                                onPressed: () => _showMedicineInfo(item),
-                              ),
-                              ElevatedButton.icon(
-                                icon: Icon(
-                                  isInCart
-                                      ? Icons.remove_shopping_cart
-                                      : Icons.add_shopping_cart,
+                              Padding(
+                                padding: const EdgeInsets.fromLTRB(
+                                  16,
+                                  0,
+                                  16,
+                                  8,
                                 ),
-                                label: Text(
-                                  isInCart ? 'Remove from Cart' : 'Add to Cart',
-                                ),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor:
-                                      isInCart ? Colors.red : Colors.blue,
-                                ),
-                                onPressed:
-                                    () =>
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    TextButton.icon(
+                                      icon: const Icon(Icons.info_outline),
+                                      label: const Text('More Information'),
+                                      onPressed: () => _showMedicineInfo(item),
+                                    ),
+                                    ElevatedButton.icon(
+                                      icon: Icon(
                                         isInCart
-                                            ? _removeFromCart(item)
-                                            : _addToCart(item),
+                                            ? Icons.remove_shopping_cart
+                                            : Icons.add_shopping_cart,
+                                      ),
+                                      label: Text(
+                                        isInCart
+                                            ? 'Remove from Cart'
+                                            : 'Add to Cart',
+                                      ),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor:
+                                            isInCart ? Colors.red : Colors.blue,
+                                      ),
+                                      onPressed:
+                                          () =>
+                                              isInCart
+                                                  ? _removeFromCart(item)
+                                                  : _addToCart(item),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ],
                           ),
-                        ),
-                      ],
+                        );
+                      },
                     ),
-                  );
-                },
-              ),
-      floatingActionButton:
-          _cartItems.isNotEmpty
-              ? FloatingActionButton.extended(
-                onPressed: _goToCheckout,
-                icon: const Icon(Icons.shopping_cart_checkout),
-                label: Text('Checkout (${_cartItems.length})'),
-              )
-              : null,
+            floatingActionButton:
+                cartService.items.isNotEmpty
+                    ? FloatingActionButton.extended(
+                      onPressed: _goToCheckout,
+                      icon: const Icon(Icons.shopping_cart_checkout),
+                      label: Text('Checkout (${cartService.items.length})'),
+                    )
+                    : null,
+          );
+        },
+      ),
     );
   }
 }

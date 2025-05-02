@@ -5,7 +5,6 @@ import 'package:my_prescription_app/services/service_provider.dart';
 import 'package:my_prescription_app/models/medicine_appointment.dart';
 import 'package:my_prescription_app/screens/results_screen.dart';
 
-
 class UploadScreen extends StatefulWidget {
   const UploadScreen({super.key});
 
@@ -31,12 +30,11 @@ class _UploadScreenState extends State<UploadScreen> {
     final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
 
     if (image != null) {
-        // For web and Linux, just use the image directly
-        setState(() {
-          _image = File(image.path);
-          _uploadStatus = '';
-        });
-       
+      // For web and Linux, just use the image directly
+      setState(() {
+        _image = File(image.path);
+        _uploadStatus = '';
+      });
     }
   }
 
@@ -44,22 +42,12 @@ class _UploadScreenState extends State<UploadScreen> {
     final XFile? image = await _picker.pickImage(source: ImageSource.camera);
 
     if (image != null) {
-
-        setState(() {
-          _image = File(image.path);
-          _uploadStatus = '';
-        });
-      
-      } 
+      setState(() {
+        _image = File(image.path);
+        _uploadStatus = '';
+      });
     }
- 
-
-
-
-
-    
-
-
+  }
 
   Future<void> _uploadImage() async {
     if (_image == null) {

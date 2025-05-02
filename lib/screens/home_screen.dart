@@ -2,81 +2,217 @@ import 'package:flutter/material.dart';
 import 'package:my_prescription_app/screens/upload_screen.dart';
 import 'package:my_prescription_app/screens/pharmacy_screen.dart';
 import 'package:my_prescription_app/screens/history_screen.dart';
+import 'package:my_prescription_app/screens/checkout_screen.dart';
+import 'package:my_prescription_app/services/service_provider.dart';
+import 'package:my_prescription_app/services/cart_service.dart';
+import 'package:provider/provider.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
   @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  late CartService _cartService;
+
+  @override
+  void initState() {
+    super.initState();
+    _cartService = ServiceProvider.getCartService();
+  }
+
+  void _goToCheckout() {
+    if (_cartService.items.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Cart is empty')));
+      return;
+    }
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CheckoutScreen(cartItems: _cartService.items),
+      ),
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('My App')),
-      body: SizedBox.expand(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              // Title at the top
-              const Padding(
-                padding: EdgeInsets.only(top: 200),
-                child: Text(
-                  'Welcome to Dawy',
-                  style: TextStyle(
-                    fontSize: 26,
-                    fontWeight: FontWeight.bold,
-                  ),
+    return ChangeNotifierProvider.value(
+      value: _cartService,
+      child: Consumer<CartService>(
+        builder: (context, cartService, child) {
+          return Scaffold(
+            appBar: AppBar(
+              title: const Text('My App'),
+              actions: [
+                Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.shopping_cart),
+                      onPressed: () {
+                        showModalBottomSheet(
+                          context: context,
+                          builder:
+                              (context) => Container(
+                                padding: const EdgeInsets.all(16),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Text(
+                                      'Your Cart',
+                                      style: TextStyle(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 16),
+                                    if (cartService.items.isEmpty)
+                                      const Text('Your cart is empty')
+                                    else
+                                      Expanded(
+                                        child: ListView.builder(
+                                          shrinkWrap: true,
+                                          itemCount: cartService.items.length,
+                                          itemBuilder: (context, index) {
+                                            final item =
+                                                cartService.items[index];
+                                            return ListTile(
+                                              title: Text(item.medicine),
+                                              subtitle: Text(item.appointment),
+                                              trailing: IconButton(
+                                                icon: const Icon(Icons.delete),
+                                                onPressed: () {
+                                                  _cartService.removeItem(item);
+                                                },
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                      ),
+                                    if (cartService.items.isNotEmpty) ...[
+                                      const SizedBox(height: 16),
+                                      ElevatedButton(
+                                        onPressed: _goToCheckout,
+                                        child: const Text(
+                                          'Proceed to Checkout',
+                                        ),
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                              ),
+                        );
+                      },
+                    ),
+                    if (cartService.items.isNotEmpty)
+                      Positioned(
+                        right: 8,
+                        top: 8,
+                        child: Container(
+                          padding: const EdgeInsets.all(2),
+                          decoration: BoxDecoration(
+                            color: Colors.red,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          constraints: const BoxConstraints(
+                            minWidth: 16,
+                            minHeight: 16,
+                          ),
+                          child: Text(
+                            cartService.items.length.toString(),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ],
+            ),
+            body: SizedBox.expand(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // Title at the top
+                    const Padding(
+                      padding: EdgeInsets.only(top: 200),
+                      child: Text(
+                        'Welcome to Dawy',
+                        style: TextStyle(
+                          fontSize: 26,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+
+                    // Buttons in the middle
+                    Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _buildCoolButton(
+                          context: context,
+                          icon: Icons.upload_file,
+                          label: 'Upload an Image',
+                          color: Colors.blueAccent,
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const UploadScreen(),
+                              ),
+                            );
+                          },
+                        ),
+                        const SizedBox(height: 20),
+                        _buildCoolButton(
+                          context: context,
+                          icon: Icons.local_pharmacy,
+                          label: 'Find Nearby Pharmacies',
+                          color: Colors.green,
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const PharmacyScreen(),
+                              ),
+                            );
+                          },
+                        ),
+                        const SizedBox(height: 20),
+                        _buildCoolButton(
+                          context: context,
+                          icon: Icons.history,
+                          label: 'View Medical History',
+                          color: Colors.deepPurple,
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const HistoryScreen(),
+                              ),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 40), // Bottom spacing
+                  ],
                 ),
               ),
-
-              // Buttons in the middle
-              Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _buildCoolButton(
-                    context: context,
-                    icon: Icons.upload_file,
-                    label: 'Upload an Image',
-                    color: Colors.blueAccent,
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => const UploadScreen()),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 20),
-                  _buildCoolButton(
-                    context: context,
-                    icon: Icons.local_pharmacy,
-                    label: 'Find Nearby Pharmacies',
-                    color: Colors.green,
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => const PharmacyScreen()),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 20),
-                  _buildCoolButton(
-                    context: context,
-                    icon: Icons.history,
-                    label: 'View Medical History',
-                    color: Colors.deepPurple,
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => const HistoryScreen()),
-                      );
-                    },
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 40), // Bottom spacing
-            ],
-          ),
-        ),
+            ),
+          );
+        },
       ),
     );
   }
