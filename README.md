@@ -124,7 +124,8 @@ Depending on the module structure (e.g., mobile app and backend), run the approp
 
 ## 📄 Documentation
 
-Full technical and implementation documentation is available in the [`Dawy.pdf`](./Dawy%20%20داوي.pdf) file in this repository.
+Full technical and implementation documentation is available in this  
+📄 [Google Drive PDF – Dawy Documentation](https://drive.google.com/file/d/12aYXK2hQDamDWeNGTMYuc5oxsiZ7_jy3/view?usp=sharing)
 
 ---
 
